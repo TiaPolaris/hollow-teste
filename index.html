@@ -2594,7 +2594,104 @@
             6: { titulo: "6. Desfecho (Resultado Provável)", slotId: "slot-6" }
         };
 
-        /* ==========================================================================\n           NAVEGAÇÃO INTERNA — HISTÓRICO DO NAVEGADOR\n           Cada etapa do ritual vira uma página do histórico, sem sair do HOLLOW.\n           ========================================================================== */\n        const HOLLOW_STEPS = [\n            'step-payment', 'step-choice', 'step-tarot-context-choice',\n            'step-register', 'step-astral-register', 'step-astral-result',\n            'step-shuffle', 'step-picking', 'step-report'\n        ];\n        let hollowNavegacaoInterna = false;\n        let hollowUltimaEtapa = null;\n\n        function hollowEtapaAtual() {\n            for (const id of HOLLOW_STEPS) {\n                const el = document.getElementById(id);\n                if (el && !el.classList.contains('hidden')) return id;\n            }\n            return null;\n        }\n\n        function hollowMostrarEtapa(id) {\n            hollowNavegacaoInterna = true;\n            HOLLOW_STEPS.forEach(stepId => {\n                const el = document.getElementById(stepId);\n                if (!el) return;\n                el.classList.add('hidden');\n                if (stepId === 'step-shuffle' || stepId === 'step-picking' || stepId === 'step-report' || stepId === 'step-astral-result') {\n                    el.classList.remove('flex');\n                }\n            });\n\n            const alvo = document.getElementById(id);\n            if (alvo) {\n                alvo.classList.remove('hidden');\n                if (id === 'step-shuffle' || id === 'step-picking' || id === 'step-report' || id === 'step-astral-result') {\n                    alvo.classList.add('flex');\n                }\n                alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });\n            }\n            hollowUltimaEtapa = id;\n            setTimeout(() => { hollowNavegacaoInterna = false; }, 50);\n        }\n\n        function hollowRegistrarEtapa(id) {\n            if (!id || hollowNavegacaoInterna || id === hollowUltimaEtapa) return;\n            hollowUltimaEtapa = id;\n            history.pushState({ hollowStep: id }, '', '#'+id.replace('step-', ''));\n        }\n\n        window.addEventListener('popstate', (event) => {\n            const id = event.state?.hollowStep || 'step-payment';\n            hollowMostrarEtapa(id);\n        });\n\n        // Cria uma entrada inicial + uma entrada duplicada: o primeiro \"Voltar\"\n        // permanece dentro do HOLLOW em vez de encerrar o arquivo/página.\n        (function inicializarHistoricoHollow() {\n            const atual = hollowEtapaAtual() || 'step-payment';\n            history.replaceState({ hollowStep: atual }, '', '#'+atual.replace('step-', ''));\n            history.pushState({ hollowStep: atual }, '', '#'+atual.replace('step-', ''));\n            hollowUltimaEtapa = atual;\n        })();\n\n        // Observa as transições existentes do HOLLOW sem precisar reescrever o fluxo atual.\n        const hollowObserver = new MutationObserver(() => {\n            if (hollowNavegacaoInterna) return;\n            const atual = hollowEtapaAtual();\n            if (atual && atual !== hollowUltimaEtapa) hollowRegistrarEtapa(atual);\n        });\n        HOLLOW_STEPS.forEach(id => {\n            const el = document.getElementById(id);\n            if (el) hollowObserver.observe(el, { attributes: true, attributeFilter: ['class'] });\n        });\n\n        function voltarNoHollow() {\n            history.back();\n        }\n\n        const hollowBotaoVoltar = document.createElement('button');\n        hollowBotaoVoltar.type = 'button';\n        hollowBotaoVoltar.id = 'hollow-back-button';\n        hollowBotaoVoltar.innerHTML = '← <span>Voltar</span>';\n        hollowBotaoVoltar.setAttribute('aria-label', 'Voltar para a etapa anterior');\n        Object.assign(hollowBotaoVoltar.style, {\n            position: 'fixed', bottom: '22px', left: '22px', zIndex: '9999',\n            padding: '10px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,.18)',\n            background: 'rgba(12,10,28,.82)', color: '#fff', backdropFilter: 'blur(12px)',\n            cursor: 'pointer', fontSize: '14px', boxShadow: '0 8px 30px rgba(0,0,0,.35)'\n        });\n        hollowBotaoVoltar.onclick = voltarNoHollow;\n        document.body.appendChild(hollowBotaoVoltar);\n        function atualizarBotaoVoltarHollow() {\n            hollowBotaoVoltar.style.display = history.length > 1 && hollowEtapaAtual() !== 'step-payment' ? 'block' : 'none';\n        }\n        setInterval(atualizarBotaoVoltarHollow, 150);\n        atualizarBotaoVoltarHollow();\n\n        /* ==========================================================================
+        /* ==========================================================================
+           NAVEGAÇÃO INTERNA — HISTÓRICO DO NAVEGADOR
+           Cada etapa do ritual vira uma página do histórico, sem sair do HOLLOW.
+           ========================================================================== */
+        const HOLLOW_STEPS = [
+            'step-payment', 'step-choice', 'step-tarot-context-choice',
+            'step-register', 'step-astral-register', 'step-astral-result',
+            'step-shuffle', 'step-picking', 'step-report'
+        ];
+        let hollowNavegacaoInterna = false;
+        let hollowUltimaEtapa = null;
+
+        function hollowEtapaAtual() {
+            for (const id of HOLLOW_STEPS) {
+                const el = document.getElementById(id);
+                if (el && !el.classList.contains('hidden')) return id;
+            }
+            return null;
+        }
+
+        function hollowMostrarEtapa(id) {
+            hollowNavegacaoInterna = true;
+            HOLLOW_STEPS.forEach(stepId => {
+                const el = document.getElementById(stepId);
+                if (!el) return;
+                el.classList.add('hidden');
+                if (stepId === 'step-shuffle' || stepId === 'step-picking' || stepId === 'step-report' || stepId === 'step-astral-result') {
+                    el.classList.remove('flex');
+                }
+            });
+
+            const alvo = document.getElementById(id);
+            if (alvo) {
+                alvo.classList.remove('hidden');
+                if (id === 'step-shuffle' || id === 'step-picking' || id === 'step-report' || id === 'step-astral-result') {
+                    alvo.classList.add('flex');
+                }
+                alvo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            hollowUltimaEtapa = id;
+            setTimeout(() => { hollowNavegacaoInterna = false; }, 50);
+        }
+
+        function hollowRegistrarEtapa(id) {
+            if (!id || hollowNavegacaoInterna || id === hollowUltimaEtapa) return;
+            hollowUltimaEtapa = id;
+            history.pushState({ hollowStep: id }, '', '#'+id.replace('step-', ''));
+        }
+
+        window.addEventListener('popstate', (event) => {
+            const id = event.state?.hollowStep || 'step-payment';
+            hollowMostrarEtapa(id);
+        });
+
+        // Cria uma entrada inicial + uma entrada duplicada: o primeiro \"Voltar\"
+        // permanece dentro do HOLLOW em vez de encerrar o arquivo/página.
+        (function inicializarHistoricoHollow() {
+            const atual = hollowEtapaAtual() || 'step-payment';
+            history.replaceState({ hollowStep: atual }, '', '#'+atual.replace('step-', ''));
+            history.pushState({ hollowStep: atual }, '', '#'+atual.replace('step-', ''));
+            hollowUltimaEtapa = atual;
+        })();
+
+        // Observa as transições existentes do HOLLOW sem precisar reescrever o fluxo atual.
+        const hollowObserver = new MutationObserver(() => {
+            if (hollowNavegacaoInterna) return;
+            const atual = hollowEtapaAtual();
+            if (atual && atual !== hollowUltimaEtapa) hollowRegistrarEtapa(atual);
+        });
+        HOLLOW_STEPS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) hollowObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+        });
+
+        function voltarNoHollow() {
+            history.back();
+        }
+
+        const hollowBotaoVoltar = document.createElement('button');
+        hollowBotaoVoltar.type = 'button';
+        hollowBotaoVoltar.id = 'hollow-back-button';
+        hollowBotaoVoltar.innerHTML = '← <span>Voltar</span>';
+        hollowBotaoVoltar.setAttribute('aria-label', 'Voltar para a etapa anterior');
+        Object.assign(hollowBotaoVoltar.style, {
+            position: 'fixed', bottom: '22px', left: '22px', zIndex: '9999',
+            padding: '10px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,.18)',
+            background: 'rgba(12,10,28,.82)', color: '#fff', backdropFilter: 'blur(12px)',
+            cursor: 'pointer', fontSize: '14px', boxShadow: '0 8px 30px rgba(0,0,0,.35)'
+        });
+        hollowBotaoVoltar.onclick = voltarNoHollow;
+        document.body.appendChild(hollowBotaoVoltar);
+        function atualizarBotaoVoltarHollow() {
+            hollowBotaoVoltar.style.display = history.length > 1 && hollowEtapaAtual() !== 'step-payment' ? 'block' : 'none';
+        }
+        setInterval(atualizarBotaoVoltarHollow, 150);
+        atualizarBotaoVoltarHollow();
+
+        /* ==========================================================================
            LÓGICA DA ETAPA 1: VALIDAR IDADE (+18)
            ========================================================================== */
         function liberarCadastro() {
